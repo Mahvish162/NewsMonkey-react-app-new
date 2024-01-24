@@ -15,45 +15,66 @@ export class News extends Component {
     pageSize:PropTypes.number,
     category:PropTypes.string
    }
+   capitalize=(string)=>{
+        return string.charAt(0).toUpperCase()+string.slice(1);
+   }
 
-    constructor(){
-        super();
+    constructor(props){
+        super(props);
         this.state={
             articles:[],
             loading:false,
             page:1,
         }
+        document.title=`${this.capitalize(this.props.category)} - NewsMonkey`
     }
-    async updatedNews(){
-        let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=d0d211578d8c4562ab652371985d96e9&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+  
+    async componentDidMount(){
+        let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=d0d211578d8c4562ab652371985d96e9&page=1&pageSize=${this.props.pageSize}`;
+        this.setState({loading :  true});
+        let data=await  fetch(url);
+        let parsedData=await data.json();
+        this.setState({
+                     articles : parsedData.articles,
+                     totalResults:parsedData.totalResults,
+                     loading:false
+        })
+    }
+
+    handlePrevClick= async ()=>{
+        console.log("previous")
+        let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=d0d211578d8c4562ab652371985d96e9&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`;
         this.setState({loading: true});
         let data=await  fetch(url);
         let parsedData=await data.json();
         this.setState({
+            page:this.state.page - 1 ,
             articles : parsedData.articles,
-            totalResults:parsedData.totalResults,
             loading:false,
-        }) 
-    }
-    async componentDidMount(){
-        this.updatedNews();
-    }
-
-    handlePrevClick= async ()=>{
-     
-        this.setState({page: this.state.page - 1});
-        this.updatedNews();
+        })  
     }
     handleNextClick=async ()=>{
-            this.setState({page: this.state.page + 1});
-            this.updatedNews();
+        console.log("Next")
+        if(this.state.page + 1 > Math.ceil(this.state.totalResults/this.props.pageSize)){
+
         }
-    
+        else{            
+            let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=d0d211578d8c4562ab652371985d96e9&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`;
+            this.setState({loading: true});
+            let data=await  fetch(url);
+            let parsedData=await data.json();
+            this.setState({
+                page:this.state.page + 1 ,
+                articles : parsedData.articles,
+                loading:false,
+            })     
+        }
+    }
     render() {
     return (
- 
+  
         <div className="container my-4">
-            <h1 className="text-center" style={{margin:'40px 40px'}}>NewsMonkey - Top Headlines</h1>
+            <h1 className="text-center" style={{margin:'40px 40px'}}>NewsMonkey - Top {this.capitalize(this.props.category)} Headlines</h1>
             {this.state.loading && <Spinner/>}  {/* if this.state.loading is true then only the spinner is working*/}
             <div className="row">
                {!this.state.loading && this.state.articles.map((element)=>{                  
@@ -67,10 +88,9 @@ export class News extends Component {
                  <button disabled={this.state.page + 1 > Math.ceil(this.state.totalResults/this.props.pageSize)} type="button" className="btn btn-dark my-3 mx-3" onClick={this.handleNextClick}>Next &rarr;</button>
              </div>      
         </div>
-   
+    
     )  
   }
 }
-
 
 export default News
